@@ -7,39 +7,72 @@ namespace LongMethod
 {
     public class CharacterControllerCustom : MonoBehaviour
     {
+        /// <summary>
+        /// Controls player movement (default to keyboard) and camera rotation using the mouse
+        /// </summary>
+        
+        [Header("Camera Control")]
+        [SerializeField]
+        private float upperLimit = 10;
+        [SerializeField]
+        private float lowerLimit = 35;
+        [SerializeField]
+        private float cameraSpeed = 45;
 
+
+        [Header("Character Movement")]
+        [SerializeField]
+        private float movementSpeed = 7;
+        [SerializeField]
+        private float jumpPower  = 10;
+
+        private Rigidbody characterRb;
 
         void Awake()
         {
+            // keeps cursor locked in game window
+            Cursor.lockState = CursorLockMode.Locked;
 
-        }
-
-        void Start()
-        {
-
+            characterRb = GetComponent<Rigidbody>();
         }
 
         void Update()
         {
-            // Keeps cursor locked in game window
-            Cursor.lockState = CursorLockMode.Locked;
+            CharacterMovement();
+            CameraRotation();
+        }
 
-            var mov = (Input.GetAxis("Horizontal") * transform.right + Input.GetAxis("Vertical") * transform.forward).normalized;
-            transform.position += mov * Time.deltaTime * 7;
+        private void CameraRotation()
+        {
+            // camera view rotation on Y axis
+            transform.localRotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + (cameraSpeed * Input.GetAxis("Mouse X") * Time.deltaTime), 0);
 
-            if (Input.GetButtonDown("Jump"))
-                GetComponent<Rigidbody>().velocity = Vector3.up * 10;
+            // camera view rotation on X Axis
+            var cameraTransform = transform.Find("Main Camera").transform;
+            var xAxisRotation = cameraTransform.localRotation.eulerAngles.x - (cameraSpeed * Input.GetAxis("Mouse Y") * Time.deltaTime);
 
+                if (xAxisRotation > lowerLimit)
+                {
+                    xAxisRotation = lowerLimit;
+                }
+                else if (xAxisRotation < upperLimit)
+                {
+                    xAxisRotation = upperLimit;
+                }
 
+            cameraTransform.localRotation = Quaternion.Euler(xAxisRotation, 0, 0);
+        }
 
-            transform.localRotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + 45 * Input.GetAxis("Mouse X") * Time.deltaTime, 0);
+        void CharacterMovement()
+        {
+            var movement = (Input.GetAxis("Horizontal") * transform.right + Input.GetAxis("Vertical") * transform.forward).normalized;
+            transform.position += (movement * Time.deltaTime * movementSpeed);
 
-            var t = transform.Find("Main Camera").transform;
-            var xRot = t.localRotation.eulerAngles.x - 45 * Input.GetAxis("Mouse Y") * Time.deltaTime;
-            if (xRot > 35) xRot = 35; else if (xRot < 10) xRot = 10;
-            t.localRotation = Quaternion.Euler(xRot, 0, 0);
+                if (Input.GetButtonDown("Jump"))
+                {
+                    characterRb.velocity = Vector3.up * jumpPower;
 
-
+                }
         }
     }
 }
